@@ -68,9 +68,38 @@ void setup()
       mySerial.write("AT+NAME\r\n");  //Verify new name       delay(100);
       mySerial.write("AT+RESET\r\n");  //reset HM10 so new name will take effect
       mySerial.println("Motion detected!");
-      mySerial.println("Would you like the wall at an angle? enter y for yes and n for no");
-      char angle = cGetCharFromPhone();
+      mySerial.println("Loading the last route that was entered")
+      //EEPROM retrieval - load the route for 5 seconds
+      mySerial.println("Would you like to program a new route, load a route remotely or use the current route?");
+      mySerial.println("Enter 'p' to program a new route, 'l' to load a route, or 'c' to keep the current route");
+      char input = cGetCharFromPhone();
       switch (input){
+        case 'p':{
+          direction = analogRead(VRx);	// read X axis value [0..1023]
+          mySerial.print("X:");
+          mySerial.println(direction, DEC);
+          direction = analogRead(VRy);	// read Y axis value [0..1023]
+          mySerial.print("Y:");
+          mySerial.println(direction, DEC);
+          break;
+        }
+        case 'l':{
+          
+          break;
+        }
+        case 'c':{
+          mySerial.println("Keeping the same route")
+          break;
+        }
+        default:{
+          mySerial.println("The input entered is not recognized, please reset the program and try again");
+          break;
+        }
+      }
+          
+      mySerial.println("Would you like the wall at an angle? enter 'y' for yes and 'n' for no");
+      char angle = cGetCharFromPhone();
+      switch (angle){
         case 'y':{
           //fire solenoid
           digitalWrite(solenoid, HIGH);
@@ -223,42 +252,6 @@ void updateShiftRegister()
    digitalWrite(latchPin1, LOW);
    shiftOut(dataPin1, clockPin1, LSBFIRST, ledrow);
    digitalWrite(latchPin1, HIGH);  
-}
-//*********BLE+Joystick+Buzzer****************************************************************************************************************************
-
-void loop(){
-
-  direction = analogRead(VRx);	// read X axis value [0..1023]
-  mySerial.print("X:");
-  mySerial.println(direction, DEC);
-  direction = analogRead(VRy);	// read Y axis value [0..1023]
-  mySerial.print("Y:");
-  mySerial.println(direction, DEC);
-  delay(250);
-    //switch statement to control buzzer mode
-  switch (input){
-    case '+':{
-      //pwm to control buzzer tone
-      
-      break;
-    }
-    case '-':{
-      digitalWrite(BuzzPin, HIGH);
-      delay(2);
-      digitalWrite(BuzzPin, LOW);
-      break;
-    }
-    case '0':{
-      //turn buzzer off
-      digitalWrite(BuzzPin, LOW);
-      break;      
-    }
-    default:{
-      //input validation
-      mySerial.println("The character you entered is not recognized, please reset the program and try again");
-      break;
-    }
-  }
 }
 
 //function cgetcharfromphone - inputs:none returns:char
