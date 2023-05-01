@@ -6,7 +6,6 @@ const int VRy = 1; //^
 const int sw = 8;  //^^
 const int buttonPin = 12;  // the pin that the pushbutton is attached to
 const int inputPin = 13;               // choose the input pin (for PIR sensor)
-const int pirState = LOW;             // we start, assuming no motion detected
 const int solenoid = 10; //solenoid pin
 const int servopin=11;  //servopin
 // Variables will change:
@@ -15,6 +14,8 @@ int buttonState = 0;        // current state of the button
 int lastButtonState = 0;        // last state of the button
 int buzztimer = 1000;       //amount of time the buzzer will be on for in ms
 int val = 0;                    // variable for reading the motion sensor status
+int pirState = LOW;             // we start, assuming no motion detected
+int analogJoy = 0;           //analog joystick input
 //***************4x4*******************************************************************************************************
 const int latchPin1 = 4;	// Latch pin of 74HC595 is connected to Digital pin 5
 const int clockPin1 = 5;	// Clock pin of 74HC595 is connected to Digital pin 6
@@ -42,7 +43,7 @@ void setup()
   //initialize motion sensor pin as input
   pinMode(inputPin, INPUT);
   //initialise solenoid pin as output
-  pinMode(solenoidpin, OUTPUT);
+  pinMode(solenoid, OUTPUT);
   //initialize servo pin as output
   pinMode(servopin, OUTPUT);
   // Set all the pins of 74HC595 as OUTPUT
@@ -68,19 +69,19 @@ void setup()
       mySerial.write("AT+NAME\r\n");  //Verify new name       delay(100);
       mySerial.write("AT+RESET\r\n");  //reset HM10 so new name will take effect
       mySerial.println("Motion detected!");
-      mySerial.println("Loading the last route that was entered")
+      mySerial.println("Loading the last route that was entered");
       //EEPROM retrieval - load the route for 5 seconds
       mySerial.println("Would you like to program a new route, load a route remotely or use the current route?");
       mySerial.println("Enter 'p' to program a new route, 'l' to load a route, or 'c' to keep the current route");
       char input = cGetCharFromPhone();
       switch (input){
         case 'p':{
-          direction = analogRead(VRx);	// read X axis value [0..1023]
+          analogJoy = analogRead(VRx);	// read X axis value [0..1023]
           mySerial.print("X:");
-          mySerial.println(direction, DEC);
-          direction = analogRead(VRy);	// read Y axis value [0..1023]
+          mySerial.println(analogJoy, DEC);
+          analogJoy = analogRead(VRy);	// read Y axis value [0..1023]
           mySerial.print("Y:");
-          mySerial.println(direction, DEC);
+          mySerial.println(analogJoy, DEC);
           break;
         }
         case 'l':{
@@ -88,7 +89,7 @@ void setup()
           break;
         }
         case 'c':{
-          mySerial.println("Keeping the same route")
+          mySerial.println("Keeping the same route");
           break;
         }
         default:{
@@ -123,7 +124,7 @@ void setup()
             delay(18.5);  
           break;
         }
-        default{
+        default:{
           mySerial.println("The input entered is not recognized, please reset the program and try again");
           break;
         }
@@ -131,18 +132,16 @@ void setup()
       // We only want to print on the output change, not state
       pirState = HIGH;
     }
-  } 
-    else {
-      if (pirState == HIGH){
-        // we have just turned of
-        Serial.println("Motion ended!");
-        // We only want to print on the output change, not state
-        pirState = LOW;
-      }
+    } 
+      else {
+        if (pirState == HIGH){
+          // we have just turned of
+          Serial.println("Motion ended!");
+          // We only want to print on the output change, not state
+          pirState = LOW;
+        }
+    }
   }
-  
-  
-
 }
 
 
@@ -242,8 +241,7 @@ void loop()
 /*
  * updateShiftRegister() - This function sets the latchPin to low, then calls the Arduino function 'shiftOut' to shift out contents of variable 'leds' in the shift register before putting the 'latchPin' high again.
  */
-void updateShiftRegister()
-{
+void updateShiftRegister(){
 
    digitalWrite(latchPin2, LOW);
    shiftOut(dataPin2, clockPin2, LSBFIRST, ledcol);
