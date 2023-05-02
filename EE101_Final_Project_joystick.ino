@@ -97,23 +97,20 @@ void setup()
           break;
         
       }
-          
-      
       // We only want to print on the output change, not state
       pirState = HIGH;
     }
-    } 
-    }
-      else {
-        if (pirState == HIGH){
-          // we have just turned of
-          Serial.println("Motion ended!");
-          // We only want to print on the output change, not state
-          pirState = LOW;
-        }
+  } 
+  else {
+    if (pirState == HIGH){
+      // we have just turned of
+      Serial.println("Motion ended!");
+      // We only want to print on the output change, not state
+      pirState = LOW;
     }
   }
 }
+
 
 
 
@@ -132,6 +129,9 @@ void loop()
     mySerial.println(analogJoy, DEC);
     delay(100);
     switchState = digitalRead(sw);
+  }
+
+
     
   //   // compare the switchState to its previous state
   //   if (switchState != lastSwitchState) {
@@ -148,75 +148,32 @@ void loop()
   //   lastButtonState = buttonState; 
   // }
 
+
+//This will turn on the correct LEDs
   ledcol = 0;
   ledrow = 0;	// Initially turns all the LEDs off, by giving the variable 'leds' the value 0
-
-  updateShiftRegister();
     for (int i = 0; i < 4; i++)	// Turn all the LEDs ON one by one.
   {
     ledcol = 0;
+    ledrow = 0;
     bitSet(ledrow, i);		// Set the bit that controls that LED in the variable 'leds'
     updateShiftRegister();
-    if(i==0) {
-      ledcol=0;
-      bitSet(ledcol, 0) ;  
-      updateShiftRegister();
-      delay(1);
-    }else if (i==1) {
-      ledcol=0;
-      bitSet(ledcol, 1) ;
-      updateShiftRegister();
-      delay(1);
-    }else if (i==2) {
-      ledcol=0;
-      bitSet(ledcol, 2) ;
-      updateShiftRegister();
-      delay(1);
-    }else {
-      ledcol=0;
-      bitSet(ledcol, 3) ;
-      updateShiftRegister();
-      delay(1);
+
+    switch(i){
+      case 0:
+        ledcol = ledcol1;
+      case 1:
+        ledcol = ledcol2;
+      case 2:
+        ledcol=ledcol3;
+      case 3:
+        ledcol=ledcol4;
     }
+
+    updateShiftRegister();
     delay(1);
-    ledrow = 0;
   }
   
-  // bitSet(ledcol,0);
-  // updateShiftRegister();
-  // delay(1);
-  // ledrow = ledrow1;
-  // updateShiftRegister();
-  // ledcol = 0;
-  // delay(1);
-  
-  // bitSet(ledcol,1);
-  // updateShiftRegister();
-  // delay(1);
-  // ledrow = ledrow2;
-  // updateShiftRegister();
-  // ledcol = 0;
-  // delay(1);
-
-  // bitSet(ledcol,2);
-  // updateShiftRegister();
-  // delay(1);
-  // ledrow = ledrow3;
-  // updateShiftRegister();
-  // ledcol = 0;
-  // delay(1);
-
-  // bitSet(ledcol,3);
-  // updateShiftRegister();
-  // delay(1);
-  // ledrow = ledrow4;
-  // updateShiftRegister();
-  // ledcol = 0;
-  // delay(1);
-  //***********Buzzer triggered by Button**********************************************************
-  // read the pushbutton input pin:
-//   buttonState = digitalRead(buttonPin);
-
 //   // compare the buttonState to its previous state
 //   if (buttonState != lastButtonState) {
 //     // if the state has changed, increment the counter
@@ -237,9 +194,7 @@ void loop()
 //   // save the current state as the last state, for next time through the loop
 //   lastButtonState = buttonState;
    }
-/*
- * updateShiftRegister() - This function sets the latchPin to low, then calls the Arduino function 'shiftOut' to shift out contents of variable 'leds' in the shift register before putting the 'latchPin' high again.
- */
+
 void updateShiftRegister(){
 
    digitalWrite(latchPin2, LOW);
@@ -284,6 +239,7 @@ void wallAngle(){
         delay(1.5);
         digitalWrite(servopin,LOW);
         delay(18.5);  
+      }
       break;
     
     default:
