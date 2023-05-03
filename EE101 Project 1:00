@@ -93,15 +93,27 @@ void setup()
       int stored_str_len = storedString.length() +1;
       char stored_char_array[stored_str_len];
       storedString.toCharArray(stored_char_array, stored_str_len);  // puts the input string into a char array
-
+      // mySerial.println(storedString);
+      // mySerial.print(stored_char_array);
+      // mySerial.println();
       // make a boolean array of arrays of the last 4 digits of each row
       //bool stored_bArray[4][4];
       for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-          ledmatrix[i][j] = bool(stored_char_array[i*4 + j]);
+          if ((stored_char_array [((i+1)*10) - 4 + j]) == '0'){
+            ledmatrix[i][j] = 0;
+          }
+          else if ((stored_char_array[((i+1)*10) - 4 + j]) == '1'){
+            ledmatrix[i][j] = 1;
+          }
         }
       }
-
+      // for (int i = 0; i < 4; i++){
+      //   for (int j = 0; j < 4; j++){
+      //     mySerial.print(ledmatrix[i][j]);
+      //   }
+      // }
+      // mySerial.println();
       for (int t = 0; t <= 500; t++){
         for (int j = 0; j < 4; j++){
           ledcol = 0;
@@ -122,13 +134,19 @@ void setup()
       mySerial.println("Would you like to program a new route, load a route remotely or use the current route?");
       mySerial.println("Enter 'p' to program a new route, 'l' to load a route, or 'c' to keep the current route");
       char input = cGetCharFromPhone();
+      mySerial.println(input);
       switch (input){
         case 'p':
           joyflag = true;
           mySerial.println("Entering Programming mode");
-          mySerial.println("Use the joystick to navigate the board - press in and hold to select a hold");
-          mySerial.println("Press in twice when you are done selecting holds");
-          bool ledmatrix[4][4] = {{1,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};   //matrix to store led values, initialized with only led 0,0 on
+          mySerial.println("Use the joystick to navigate the board - press in to select a hold");
+          mySerial.println("Press in and hold for two seconds when you are done selecting holds");
+          for (int i = 0; i < 4; i++){
+            for (int j = 0; j < 4; j++){
+                ledmatrix[i][j] = 0;
+            }
+          }
+          ledmatrix[0][0] = 1;
           break;
         
         case 'l':
@@ -147,7 +165,12 @@ void setup()
           //bool bArray[4][4];
           for (int i = 0; i < 4; i++){
             for (int j = 0; j < 4; j++){
-              ledmatrix[i][j] = bool(char_array[i*5 +1 +j]);
+              if ((stored_char_array [((i+1)*10) - 4 + j]) == '0'){
+                ledmatrix[i][j] = 0;
+              }
+              else if ((stored_char_array[((i+1)*10) - 4 + j]) == '1'){
+                ledmatrix[i][j] = 1;
+              }
             }
           }
           wallAngle();
