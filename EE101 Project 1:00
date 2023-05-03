@@ -2,13 +2,12 @@
 #include <LowPower.h> //Power Saver Library
 #include <EEPROM.h>
 SoftwareSerial mySerial(6,7);  //BLE TX is on pin2 and RX on pin 
-const int BuzzPin = 0; //buzzer pin
+const int BuzzPin = 9; //buzzer pin
 const int VRx = 5; //analogpins for joystick
 const int VRy = 4; //^
 const int sw = 8;  //^^
 const int buttonPin = 12;  // the pin that the pushbutton is attached to
 const int inputPin = 13;               // choose the input pin (for PIR sensor)
-const int solenoid = 10; //solenoid pin
 const int servopin=11;  //servopin
 // Variables will change:
 int servotimer = 50;        //time to move servo to new position
@@ -16,7 +15,7 @@ int buttonState = 0;        // current state of the button
 int lastButtonState = 0;        // last state of the button
 int switchState = 0;           //current state of joystick switch
 int lastSwitchState = 0;      //last state of joystick switch
-int buzztimer = 1000;       //amount of time the buzzer will be on for in ms
+int buzztime = 500;       //amount of time the buzzer will be on for in ms
 int val = 0;                    // variable for reading the motion sensor status
 int pirState = LOW;             // we start, assuming no motion detected
 int analogjoy = 0;           //analog joystick input
@@ -59,10 +58,12 @@ void setup()
   pinMode(buttonPin, INPUT);
   //initialize motion sensor pin as input
   pinMode(inputPin, INPUT);
-  //initialise solenoid pin as output
-  pinMode(solenoid, OUTPUT);
   //initialize servo pin as output
   pinMode(servopin, OUTPUT);
+  // initialize buzzer pin as output
+  pinMode(BuzzPin, OUTPUT);
+  //initialize joystick swithc pin as input
+  pinMode(sw, INPUT);
   // Set all the pins of 74HC595 as OUTPUT
   pinMode(latchPin1, OUTPUT);
   pinMode(dataPin1, OUTPUT);  
@@ -93,25 +94,12 @@ void setup()
       char stored_char_array[stored_str_len];
       storedString.toCharArray(stored_char_array, stored_str_len);  // puts the input string into a char array
 
-      // initialize boolean arrays for each row
-      bool s_row1[4];
-      bool s_row2[4];
-      bool s_row3[4];
-      bool s_row4[4];
-
-      // make a boolean array of the last 4 digits of each row
-      bool stored_bArray[4] = {s_row1[4], s_row2[4], s_row3[4], s_row4[4]};
-      for (int i = 6; i < 10; i++){                                 // row one
-        s_row1[i-6] = bool(stored_char_array[i]);
-      }
-      for (int i = 16; i < 20; i++){                                // row two
-        s_row2[i-16] = bool(stored_char_array[i]);
-      }
-      for (int i = 26; i < 30; i++){                                // row three
-        s_row3[i-26] = bool(stored_char_array[i]);
-      }
-      for (int i = 36; i < 40; i++){                                // row four
-        s_row4[i-36] = bool(stored_char_array[i]);
+      // make a boolean array of arrays of the last 4 digits of each row
+      bool stored_bArray[4][4];
+      for (int i = 0; i < 4; i++){
+        for (int j = 0; j < 4; j++){
+          stored_bArray[i][j] = bool(stored_char_array[i*4 + j]);
+        }
       }
 
       mySerial.println("Would you like to program a new route, load a route remotely or use the current route?");
@@ -123,31 +111,7 @@ void setup()
           mySerial.println("Entering Programming mode");
           mySerial.println("Use the joystick to navigate the board - press in and hold to select a hold");
           mySerial.println("Press in twice when you are done selecting holds");
-                      //start with array of bool arrays, convert to string
-          String strToStore;
-
-          // assuming an array called arrayArray[4] with 4 arrays inside called i_row1,2,3,4
-          bool i_row1[4];
-          bool i_row2[4];
-          bool i_row3[4];
-          bool i_row4[4];
-          // change names!!!
-          strToStore += "0b0000";
-          for (int i = 0; i < 4; i++){
-            strToStore += i_row1[i];
-          }
-          strToStore += "0b0000";
-          for (int i = 0; i < 4; i++){
-            strToStore += i_row2[i];
-          }
-          strToStore += "0b0000";
-          for (int i = 0; i < 4; i++){
-            strToStore += i_row3[i];
-          }
-          strToStore += "0b0000";
-          for (int i = 0; i < 4; i++){
-            strToStore += i_row4[i];
-          }
+          
           break;
         
         case 'l':
@@ -162,25 +126,12 @@ void setup()
           char char_array[str_len];
           sInString.toCharArray(char_array, str_len);  // puts the input string into a char array
 
-          // initialize boolean arrays for each row
-          bool row1[4];
-          bool row2[4];
-          bool row3[4];
-          bool row4[4];
-
           // make a boolean array of the last 4 digits of each row
-          bool bArray[4] = {row1[4], row2[4], row3[4], row4[4]};
-          for (int i = 6; i < 10; i++){                                 // row one
-            row1[i-6] = bool(char_array[i]);
-          }
-          for (int i = 16; i < 20; i++){                                // row two
-            row2[i-16] = bool(char_array[i]);
-          }
-          for (int i = 26; i < 30; i++){                                // row three
-            row3[i-26] = bool(char_array[i]);
-          }
-          for (int i = 36; i < 40; i++){                                // row four
-            row4[i-36] = bool(char_array[i]);
+          bool bArray[4][4];
+          for (int i = 0; i < 4; i++){
+            for (int j = 0; j < 4; j++){
+              bArray[i][j] = bool(char_array[i*5 +1 +j]);
+            }
           }
           wallAngle();
           break;
@@ -258,6 +209,15 @@ void loop()
         }
         else if ((timerelease - timepress) > 1500){
           joyflag = false;
+          mySerial.println("Route Saved");
+          String strToStore;               //start with array of bool arrays, convert to string
+          // reading from global bool ledmatrix[4][4]
+          for (int i = 0; i < 4; i++){
+            strToStore += "0b0000";
+            for (int j = 0; j < 4; j++){
+              strToStore += ledmatrix[i][j];
+            }
+          }
           wallAngle();
         }
       }
@@ -368,6 +328,25 @@ void loop()
       }
     }
   }
+  // read the pushbutton input pin:
+  buttonState = digitalRead(buttonPin);
+  // compare the buttonState to its previous state
+  if (buttonState != lastButtonState) {
+    // if the state has changed, increment the counter
+    if (buttonState == HIGH) {
+      // if the current state is HIGH then the button went from off to on:
+      
+    } 
+    else {
+      // if the current state is LOW then the button went from on to off:
+      for (int i = 0; i <= buzztime; i++){
+        digitalWrite(BuzzPin, HIGH);
+        delay(1);
+        digitalWrite(BuzzPin, LOW);
+      }
+    }
+    lastButtonState = buttonState;    // save the current state as the last state, for next time through the loop
+  }
 }
 /*
  * updateShiftRegister() - This function sets the latchPin to low, then calls the Arduino function 'shiftOut' to shift out contents of variable 'leds' in the shift register before putting the 'latchPin' high again.
@@ -396,8 +375,6 @@ void wallAngle(){
   char angle = cGetCharFromPhone();
   switch (angle){
     case 'y':
-      //fire solenoid
-      digitalWrite(solenoid, HIGH);
       //change servo angle
       for (int i=0; i <= servotimer; i++){
         digitalWrite(servopin,HIGH);
@@ -408,8 +385,6 @@ void wallAngle(){
       break;
     
     case 'n':
-      //turn off solenoid
-      digitalWrite(solenoid, HIGH);
       //reset servo angle
       for (int i=0; i <= servotimer; i++){
         digitalWrite(servopin,HIGH);
