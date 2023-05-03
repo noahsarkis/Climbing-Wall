@@ -153,7 +153,7 @@ void setup()
           ledmatrix[0][0] = 1;
           break;
         
-        case 'l':
+        case 'l':{
           mySerial.println("Copy and paste the byte values that indicate which LEDs to illuminate:");
           mySerial.println("It will take a few moments to process the string");
           //call get string from phone
@@ -182,6 +182,7 @@ void setup()
           angle = cGetCharFromPhone();
           wallAngle(angle);
           break;
+          }
         
         case 'c':
           mySerial.println("Keeping the same route");
