@@ -30,6 +30,7 @@ long timerelease = 0;       //timer to record switch release time
 String sInString;           //input string of led location bytes from user
 int str_len;               //length of input string
 char char_array;           //array of characters from input string
+char angle;                 //character to determine angle from user input
 
 //***************4x4*******************************************************************************************************
 const int latchPin1 = 4;	// Latch pin of 74HC595 is connected to Digital pin 5
@@ -152,11 +153,12 @@ void setup()
           ledmatrix[0][0] = 1;
           break;
         
-        case 'l':
+        case 'l':{
           mySerial.println("Copy and paste the byte values that indicate which LEDs to illuminate:");
+          mySerial.println("It will take a few moments to process the string");
           //call get string from phone
           sInString = sGetStringFromPhone();
-
+          delay(5000);
           //save the string to EEPROM memory
           writeStringToEEPROM(0, sInString);
 
@@ -176,18 +178,24 @@ void setup()
               }
             }
           }
-          wallAngle();
+          mySerial.println("Would you like the wall at an angle? enter 'y' for yes and 'n' for no");
+          angle = cGetCharFromPhone();
+          wallAngle(angle);
           break;
+          }
         
         case 'c':
           mySerial.println("Keeping the same route");
-          wallAngle();
+          mySerial.println("Would you like the wall at an angle? enter 'y' for yes and 'n' for no");
+          angle = cGetCharFromPhone();
+          wallAngle(angle);
           break;
         
         default:
           mySerial.println("The input entered is not recognized, please reset the program and try again");
           break;
       }
+      mySerial.println(pirState);
       // We only want to print on the output change, not state
       pirState = HIGH;
     }
@@ -262,7 +270,9 @@ void loop()
             }
           }
           writeStringToEEPROM(0,strToStore);
-          wallAngle();
+          mySerial.println("Would you like the wall at an angle? enter 'y' for yes and 'n' for no");
+          angle = cGetCharFromPhone();
+          wallAngle(angle);
         }
       }
     }
@@ -414,9 +424,7 @@ char cGetCharFromPhone(){
   return(char(IInByte));
 }
 //function wallangle - inputs:none returns:none
-void wallAngle(){
-  mySerial.println("Would you like the wall at an angle? enter 'y' for yes and 'n' for no");
-  char angle = cGetCharFromPhone();
+void wallAngle(char angle){
   switch (angle){
     case 'y':
       //change servo angle
