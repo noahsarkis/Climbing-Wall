@@ -44,7 +44,7 @@ byte ledrow = 0;
 // byte ledcol3 = 0b00000010;
 // byte ledcol4 = 0b00000001;
 //byte colchange = 1; //byte which changes the led position when programming
-bool ledmatrix[4][4] = {{1,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};   //matrix to store led values, initialized with only led 0,0 on
+bool ledmatrix[4][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};   //matrix to store led values, initialized with no leds on
 //variables to store cursor location
 int xloc = 0; 
 int yloc = 0;                
@@ -95,10 +95,27 @@ void setup()
       storedString.toCharArray(stored_char_array, stored_str_len);  // puts the input string into a char array
 
       // make a boolean array of arrays of the last 4 digits of each row
-      bool stored_bArray[4][4];
+      //bool stored_bArray[4][4];
       for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-          stored_bArray[i][j] = bool(stored_char_array[i*4 + j]);
+          ledmatrix[i][j] = bool(stored_char_array[i*4 + j]);
+        }
+      }
+
+      for (int t = 0; t <= 500; t++){
+        for (int j = 0; j < 4; j++){
+          ledcol = 0;
+          ledrow = 0;	// Initially turns all the LEDs off, by giving the variable 'leds' the value 0
+          updateShiftRegister();
+          for (int i = 0; i < 4; i++){
+            updateShiftRegister();
+            if (ledmatrix[j][i] == 1){
+              bitSet(ledcol,i);
+              bitSet(ledrow,j);
+              updateShiftRegister();
+              delay(1);
+            }
+          }
         }
       }
 
@@ -111,7 +128,7 @@ void setup()
           mySerial.println("Entering Programming mode");
           mySerial.println("Use the joystick to navigate the board - press in and hold to select a hold");
           mySerial.println("Press in twice when you are done selecting holds");
-          
+          bool ledmatrix[4][4] = {{1,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};   //matrix to store led values, initialized with only led 0,0 on
           break;
         
         case 'l':
@@ -127,10 +144,10 @@ void setup()
           sInString.toCharArray(char_array, str_len);  // puts the input string into a char array
 
           // make a boolean array of the last 4 digits of each row
-          bool bArray[4][4];
+          //bool bArray[4][4];
           for (int i = 0; i < 4; i++){
             for (int j = 0; j < 4; j++){
-              bArray[i][j] = bool(char_array[i*5 +1 +j]);
+              ledmatrix[i][j] = bool(char_array[i*5 +1 +j]);
             }
           }
           wallAngle();
@@ -218,6 +235,7 @@ void loop()
               strToStore += ledmatrix[i][j];
             }
           }
+          writeStringToEEPROM(0,strToStore);
           wallAngle();
         }
       }
