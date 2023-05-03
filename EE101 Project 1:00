@@ -27,6 +27,9 @@ bool joyflag = false;        //flag to open/close programming loop
 bool saveflag = false;       //
 long timepress = 0;         //timer to record switch press time
 long timerelease = 0;       //timer to record switch release time
+String sInString;           //input string of led location bytes from user
+int str_len;               //length of input string
+char char_array;           //array of characters from input string
 
 //***************4x4*******************************************************************************************************
 const int latchPin1 = 4;	// Latch pin of 74HC595 is connected to Digital pin 5
@@ -152,12 +155,12 @@ void setup()
         case 'l':
           mySerial.println("Copy and paste the byte values that indicate which LEDs to illuminate:");
           //call get string from phone
-          String sInString = sGetStringFromPhone();
+          sInString = sGetStringFromPhone();
 
           //save the string to EEPROM memory
           writeStringToEEPROM(0, sInString);
 
-          int str_len = sInString.length() +1;
+          str_len = sInString.length() +1;
           char char_array[str_len];
           sInString.toCharArray(char_array, str_len);  // puts the input string into a char array
 
@@ -165,10 +168,10 @@ void setup()
           //bool bArray[4][4];
           for (int i = 0; i < 4; i++){
             for (int j = 0; j < 4; j++){
-              if ((stored_char_array [((i+1)*10) - 4 + j]) == '0'){
+              if ((char_array [((i+1)*10) - 4 + j]) == '0'){
                 ledmatrix[i][j] = 0;
               }
-              else if ((stored_char_array[((i+1)*10) - 4 + j]) == '1'){
+              else if ((char_array[((i+1)*10) - 4 + j]) == '1'){
                 ledmatrix[i][j] = 1;
               }
             }
