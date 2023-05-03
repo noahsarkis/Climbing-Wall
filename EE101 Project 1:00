@@ -27,10 +27,10 @@ bool joyflag = false;        //flag to open/close programming loop
 bool saveflag = false;       //
 long timepress = 0;         //timer to record switch press time
 long timerelease = 0;       //timer to record switch release time
-String sInString;           //input string of led location bytes from user
-int str_len;               //length of input string
+String sInString = "";           //input string of led location bytes from user
+int str_len = 0;               //length of input string
 char char_array;           //array of characters from input string
-char angle;                 //character to determine angle from user input
+char angle = 'n';                 //character to determine angle from user input, initialized at no
 
 //***************4x4*******************************************************************************************************
 const int latchPin1 = 4;	// Latch pin of 74HC595 is connected to Digital pin 5
@@ -138,7 +138,6 @@ void setup()
       mySerial.println("Would you like to program a new route, load a route remotely or use the current route?");
       mySerial.println("Enter 'p' to program a new route, 'l' to load a route, or 'c' to keep the current route");
       char input = cGetCharFromPhone();
-      mySerial.println(input);
       switch (input){
         case 'p':
           joyflag = true;
@@ -157,8 +156,10 @@ void setup()
           mySerial.println("Copy and paste the byte values that indicate which LEDs to illuminate:");
           mySerial.println("It will take a few moments to process the string");
           //call get string from phone
-          sInString = sGetStringFromPhone();
           delay(5000);
+          sInString = sGetStringFromPhone();
+          sInString.remove(0,1);
+          mySerial.println(sInString);
           //save the string to EEPROM memory
           writeStringToEEPROM(0, sInString);
 
@@ -188,6 +189,7 @@ void setup()
           mySerial.println("Keeping the same route");
           mySerial.println("Would you like the wall at an angle? enter 'y' for yes and 'n' for no");
           angle = cGetCharFromPhone();
+          mySerial.println(angle);
           wallAngle(angle);
           break;
         
@@ -195,7 +197,6 @@ void setup()
           mySerial.println("The input entered is not recognized, please reset the program and try again");
           break;
       }
-      mySerial.println(pirState);
       // We only want to print on the output change, not state
       pirState = HIGH;
     }
@@ -418,14 +419,15 @@ void updateShiftRegister(){
 
 //function cgetcharfromphone - inputs:none returns:char
 char cGetCharFromPhone(){
+  Serial.flush();
   int IInByte;                            //declare local variable
   while (mySerial.available() == 0) {}     //wait for data available
   IInByte = mySerial.read();               //read character
   return(char(IInByte));
 }
 //function wallangle - inputs:none returns:none
-void wallAngle(char angle){
-  switch (angle){
+void wallAngle(char input){
+  switch (input){
     case 'y':
       //change servo angle
       for (int i=0; i <= servotimer; i++){
@@ -453,6 +455,7 @@ void wallAngle(char angle){
 
 //function sGetStrFromPhone - inputs: none returns: string
 String sGetStringFromPhone(){
+  Serial.flush();
   String inputString;
   while (mySerial.available() == 0) {}
   inputString = mySerial.readString();
